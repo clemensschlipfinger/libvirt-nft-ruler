@@ -1,6 +1,6 @@
 #!/bin/python
 
-NFTABLES_TEMPLATE_FOLDER = "/home/clemens/projects/libvirt-nft-ruler/templates"
+NFTABLES_TEMPLATE_FOLDER = "/usr/share/libvirt-nft-ruler/templates"
 NFTABLES_TEMPLATE = "-template.json"
 
 TARGET_IDENTIFIER = "-nft-ruler-"
