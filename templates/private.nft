@@ -1,0 +1,16 @@
+#!/bin/nft -f
+define virtualInterface = "virbr2"
+
+table inet filter {
+        chain insert-input{
+            iifname $virtualInterface tcp dport {67,53} accept comment "libvirtd $networkName"
+            iifname $virtualInterface udp dport {67,53} accept comment "libvirtd $networkName"
+        }
+
+        chain forward {
+            type filter hook forward priority filter; policy drop;
+            iifname $virtualInterface reject comment "libvirtd $networkName"
+            oifname $virtualInterface reject comment "libvirtd $networkName"
+        }
+}
+

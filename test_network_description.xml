@@ -1,0 +1,14 @@
+<hookData>
+   <network>
+     <name>network-nft-ruler-nat</name>
+     <uuid>7d2ddf15-2f73-44a3-b4e1-fc7cc2565cd6</uuid>
+     <forward mode='open'/>
+     <bridge name='virbr1' stp='on' delay='0'/>
+     <mac address='52:54:00:a6:6d:ea'/>
+     <ip address='192.168.101.1' netmask='255.255.255.0'>
+       <dhcp>
+         <range start='192.168.101.128' end='192.168.101.254'/>
+       </dhcp>
+     </ip>
+   </network>
+ </hookData>

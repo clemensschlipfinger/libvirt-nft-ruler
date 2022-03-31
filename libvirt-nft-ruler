@@ -1,0 +1,147 @@
+#!/bin/python
+
+NFTABLES_TEMPLATE_FOLDER = "/home/clemens/projects/libvirt-nft-ruler/templates"
+NFTABLES_TEMPLATE = "-template.json"
+
+TARGET_IDENTIFIER = "-nft-ruler-"
+
+from enum import Enum
+class Operation(Enum):
+    Started = 1
+    Stopped = 2
+    Other = 3
+
+class Network():
+    def __init__(self, networkname, operation, interfacename):
+        self.networkName = networkname
+        self.networkType = Network.evalNetworkType(networkname)
+
+        self.operation = operation
+
+        self.interfaceName = interfacename
+
+    @classmethod
+    def evalNetworkType(cls, networkname):
+        return networkname.split("-").pop()
+
+    @classmethod
+    def evalOperation(cls, operation):
+        if operation == "started":
+            return Operation.Started
+        elif operation == "stopped":
+            return Operation.Stopped
+        else:
+            return Operation.Other
+
+import json
+import nftables
+class Nftabler():
+    def __init__(self):
+        nft = nftables.Nftables()
+        nft.set_json_output(True)
+        nft.set_handle_output(True)
+        self.nft = nft
+
+    def loadTemplate(self, prefix):
+        # load your JSON content
+        try:
+            data_structure = json.load(open(NFTABLES_TEMPLATE_FOLDER +"/"+ prefix + NFTABLES_TEMPLATE))
+        except json.decoder.JSONDecodeError as e:
+            print(f"ERROR: failed to decode JSON Template: {e}")
+            exit(1)
+
+        return data_structure
+
+    def applyNetwork(self,network):
+        if network.operation == Operation.Started:
+            self.addNetwork(network)
+        elif network.operation == Operation.Stopped:
+            self.deleteNetwork(network)
+
+    def deleteNetwork(self,network):
+        kernelruleset = self.listKernelRuleSet()['nftables']; 
+        targetrules = list()
+        for item in kernelruleset:
+            r = item.get('rule')
+            if r:
+                c = r.get('comment')
+                if c:
+                    if c.split(" ")[1] == network.networkName: 
+                        targetrules.append(item)
+        del(kernelruleset)
+
+        cmd = list()
+        for i in targetrules:
+            cmd.append(dict(delete=i))
+        del(targetrules)
+        cmd = dict(nftables=cmd)
+
+        self.applyJson(cmd)
+
+    def addNetwork(self,network):
+        template = list()
+        for rule in self.loadTemplate(network.networkType)['nftables']:
+            template.append(dict(add=rule))
+        template = dict(nftables=template)
+
+        rules = json.dumps(template)
+        rules = rules.replace("$virtualInterface",network.interfaceName)
+        rules = rules.replace("$networkName",network.networkName)
+        rulesJson = json.loads(rules)
+        self.applyJson(rulesJson)
+
+    def applyJson(self,jsonRules):
+        # validate it with the libnftables JSON schema
+        try:
+            self.nft.json_validate(jsonRules)
+        except Exception as e:
+            print(f"ERROR: failed validating json schema: {e}")
+            exit(1)
+
+        rc, output, error = self.nft.json_cmd(jsonRules)
+        if rc != 0:
+            # do proper error handling here, exceptions etc
+            print(f"ERROR: running json cmd: {error}")
+            exit(1)
+
+        if len(output) != 0:
+            # more error control?
+            print(f"WARNING: output: {output}")
+    
+    def listKernelRuleSet(self):
+        rc, output, error = self.nft.cmd("list ruleset")
+        if rc != 0:
+            # do proper error handling here, exceptions etc
+            print("ERROR: running cmd 'list ruleset'")
+            print(error)
+            exit(1)
+
+        if len(output) == 0:
+            # more error control
+            print("ERROR: no output from libnftables")
+            exit(0)
+
+        return json.loads(output)
+
+       
+
+import sys
+from lxml import etree
+if __name__ == "__main__":
+    tree = etree.parse(sys.stdin).find("network")
+    name = tree.find("name").text
+    
+    if not TARGET_IDENTIFIER in name:
+        print("This is not a target network.")
+        quit()
+
+    interfacename = tree.find("bridge").attrib['name']
+
+    operation = Network.evalOperation(sys.argv[2])
+    if operation == Operation.Other:
+        print("Nothing to do on this operation.")
+        quit()
+
+    network = Network(name, operation, interfacename)
+    nftabler = Nftabler()
+    nftabler.applyNetwork(network)

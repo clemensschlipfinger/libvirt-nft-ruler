@@ -1,0 +1,151 @@
+{
+    "nftables": [
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "insert-input",
+                "comment": "libvirtd $networkName",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "meta": {
+                                    "key": "iifname"
+                                }
+                            },
+                            "right": "$virtualInterface"
+                        }
+                    },
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "tcp",
+                                    "field": "dport"
+                                }
+                            },
+                            "right": {
+                                "set": [
+                                    53,
+                                    67
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "accept": null
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "insert-input",
+                "comment": "libvirtd $networkName",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "meta": {
+                                    "key": "iifname"
+                                }
+                            },
+                            "right": "virbr2"
+                        }
+                    },
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "udp",
+                                    "field": "dport"
+                                }
+                            },
+                            "right": {
+                                "set": [
+                                    53,
+                                    67
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "accept": null
+                    }
+                ]
+            }
+        },
+        {
+            "chain": {
+                "family": "inet",
+                "table": "filter",
+                "name": "forward",
+                "type": "filter",
+                "hook": "forward",
+                "prio": 0,
+                "policy": "drop"
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "forward",
+                "comment": "libvirtd $networkName",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "meta": {
+                                    "key": "iifname"
+                                }
+                            },
+                            "right": "$virtualInterface"
+                        }
+                    },
+                    {
+                        "reject": {
+                            "type": "icmpx",
+                            "expr": "port-unreachable"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "forward",
+                "comment": "libvirtd $networkName",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "meta": {
+                                    "key": "oifname"
+                                }
+                            },
+                            "right": "$virtualInterface"
+                        }
+                    },
+                    {
+                        "reject": {
+                            "type": "icmpx",
+                            "expr": "port-unreachable"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
