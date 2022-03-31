@@ -21,8 +21,10 @@ When you start this network in Libvirt the script will apply the rules in the sp
 Templates are ```json``` files in the ```templates``` folder which contain the rulesets.  
 In every file there are placeholders which are replaced when the script runs.
  - ```$virtualInterface``` specifies the interface for the virtual network.
- - ```$networkName``` is the name of the virtual network.
+ - ```$networkName``` is the name of the virtual network.  
+
 Additionally every rule has the property ```"comment": "libvirtd $networkName"``` which has the purpose to identify the rules on deletion.
+
 ### Predefined Templates
 I have already made templates with rules for a nat and a private network. The rules are based on the [```default ruleset```](https://libvirt.org/firewall.html) libvirt uses.  
 
