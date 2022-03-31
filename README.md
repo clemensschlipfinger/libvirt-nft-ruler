@@ -1,7 +1,9 @@
 # libvirt-nft-ruler
 ```libvirt-nft-ruler``` is script written in Python for automatically applying/removing firewall rules with ```nft``` when a virtual network in libvirt starts or stops.
 ## Motivation
-Libvirt uses ```iptables``` for the firewall configuration of the virtual networks. It has no good compatibility to ```nftables``` (the successor of iptables) which I use myself. So I wrote this script.
+Libvirt uses ```iptables``` for the firewall configuration of the virtual networks. It has no good compatibility to ```nftables``` (the successor of iptables) which I use myself.  
+I wanted to insert the input rules from libvirt into my own input chain in a specific order which was not possible.  
+So I wrote this script.
 ## Installation
 If you are runnig ```Arch Linux``` on your computer, just use the ```PKGBUILD``` script otherwise do the [`Manual Install`](#manual-install).  
 After the installation restart ```libvirtd``` with ```systemctl```.
@@ -28,7 +30,7 @@ Additionally every rule has the property ```"comment": "libvirtd $networkName"``
 ### Predefined Templates
 I have already made templates with rules for a nat and a private network. The rules are based on the [```default ruleset```](https://libvirt.org/firewall.html) libvirt uses.  
 
-**Attention:** The templates assume that a ```insert-input``` chain is already defined. The reason behind it is that I want to easily insert my input rules in specific place in my standard ```input base chain```.  
+**Attention:** The templates assume that a ```insert-input``` chain is already defined. The reason behind it is that I want to easily insert my input rules in a specific order in my standard ```input base chain```.  
 #### Create your own ```insert-input``` chain
  - create ```insert-input``` chain using ```nft```
  - call the chain in the ```base input chain``` using the verdict statement ```jump``` in ```nft```
