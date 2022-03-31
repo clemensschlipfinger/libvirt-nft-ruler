@@ -1,4 +1,4 @@
-# libvirtd-nft-ruler
+# libvirt-nft-ruler
 ```libvirt-nft-ruler``` is script written in Python for automatically applying firewall rules with ```nft``` when a virtual network in libvirt starts or stops.
 ## Motivation
 Libvirt uses ```iptables``` for the firewall configuration of the virtual networks. It has no good compatibility to ```nftables``` (the successor of iptables) which I use myself. So I wrote this script.
